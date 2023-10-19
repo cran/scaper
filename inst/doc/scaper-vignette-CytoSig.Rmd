@@ -1,0 +1,68 @@
+---
+title: 'Cytokine Activity Estimation using SCAPE (Single cell transcriptomics-level Cytokine Activity Prediction and Estimation): An Analysis using the CytoSig database.'
+author: "Azka Javaid and H. Robert Frost"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+vignette: >
+  %\VignetteIndexEntry{scaper-vignette-CytoSig}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r message=FALSE, warning=FALSE}
+library(scaper)
+library(Seurat)
+library(SeuratObject)
+library(pheatmap)
+```
+
+In this vignette, we perform gene set scoring for 41 cytokines using the CytoSig database, detailing the genes and the associated log2 fold change values upon treatment, for a sample of the Peripheral Blood Mononuclear Cells (PBMC) dataset. 
+
+In the `scaper` package, we detail the development of five functions. The first function, `supportedCytokines`, returns a list of the scored cytokines for the CytoSig and the Reactome databases. Next two functions, `genesetCytoSig` and `genesetReactome`, perform gene set construction for the CytoSig and the Reactome databases, respectively. Lastly, the `scapeForSeurat` function, performs gene set scoring using the constructed databases with the Seurat framework integrated. In comparison, the `scape` function performs gene set scoring with the normalized counts matrix (i.e., without relying on the Seurat framework).  
+
+We first show the functionality of our package using an example function call for the `geneCytoSig` function. In the call below, we first find a list of all scored cytokines for the CytoSig database. We next create a gene set for IL6 and extract the top 10 targets that are differentially expressed upon treatment with the cytokine using the CytoSig database. This function is currently operational for the IL4 and IL6 cytokines. For all other cytokines, specify the cytokine-specific output file. 
+
+```{r message=FALSE, warning=FALSE}
+supportedCytokines(database = "cytosig")
+genesetCytoSig(cytokine.eval = "IL6", 
+               file.name = system.file("extdata", "IL6_output.csv",
+                                       package = "scaper")) %>% head(10)
+```
+Next, we perform gene set scoring using the `scapeForSeurat` function, which accepts a Seurat object, with the CytoSig gene sets on the `pbmc_small` sampled dataset from the Seurat package, which contains about 230 features/genes assessed over 80 samples/cells. The output is a `scape` assay in the Cytosig.score.output object which is 41 by 80 and contains scored expression for 41 cytokines in 80 cells. As indicated below, we can extract that object and create an unclustered and clustered representation of the heatmap constructed based on the output scores. 
+```{r message=FALSE, warning=FALSE}
+CytoSig.score.output <- scapeForSeurat(seurat.object = pbmc_small, 
+                                       database = "cytosig", cytokine = "all", normalize = TRUE)
+class(CytoSig.score.output)
+GetAssay(object = CytoSig.score.output, assay = "scape")
+#DefaultAssay(CytoSig.score.output) <- "scape"
+#GetAssayData(object = CytoSig.score.output, slot = "data")
+cytosig_mat <- as.data.frame(t(as.matrix(CytoSig.score.output@assays$scape@data)))
+pheatmap(cytosig_mat, fontsize_row = 4, fontsize_col = 7, 
+         cluster_rows = FALSE, cluster_cols = FALSE)
+```
+
+```{r message=FALSE, warning=FALSE}
+pheatmap(cytosig_mat, fontsize_row = 4, fontsize_col = 7)
+```
+
+Lastly, we perform gene set scoring using the `scape` function which accepts a m by n matrix as input (as compared to a Seurat object), with m samples and n genes.  
+```{r message=FALSE, warning=FALSE}
+pbmc_small <- NormalizeData(pbmc_small)
+counts.matrix2 <- as.data.frame(t(as.matrix(pbmc_small@assays$RNA@data)))
+CytoSig.score.output <- scape(counts.matrix = counts.matrix2, 
+                              database = "cytosig", cytokine = "all")
+pheatmap(CytoSig.score.output, fontsize_row = 4, fontsize_col = 7, 
+         cluster_rows = FALSE, cluster_cols = FALSE)
+```
+
+
+
