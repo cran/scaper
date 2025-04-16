@@ -50,7 +50,7 @@ scapeForSeurat <- function(seurat.object, database="cytosig", cytokine="all", no
       out.data <- total.output[[i]]
       positive.weighted.data <- out.data %>% dplyr::filter(weight > 0) %>% dplyr::arrange(desc(weight))
       positive.weighted.genes <- positive.weighted.data[positive.weighted.data$gene %in% rownames(seurat.object),]
-      positive.weighted.indices <- which(rownames(seurat.object) %in% positive.weighted.genes$gene)
+      positive.weighted.indices <- match(positive.weighted.genes$gene, rownames(seurat.object))
       label.genes.positive <- paste(unique(total.output[[i]]$cytokineLabel), "GenesPositive", sep = "-")
       assign(label.genes.positive, positive.weighted.indices)
       label.weights.positive <- paste(unique(total.output[[i]]$cytokineLabel), "WeightsPositive", sep = "-")
@@ -58,7 +58,7 @@ scapeForSeurat <- function(seurat.object, database="cytosig", cytokine="all", no
       
       negative.weighted.data <- out.data %>% dplyr::filter(weight < 0) %>% dplyr::arrange(desc(weight))
       negative.weighted.genes <- negative.weighted.data[negative.weighted.data$gene %in% rownames(seurat.object),]
-      negative.weighted.indices <- which(rownames(seurat.object) %in% negative.weighted.genes$gene)
+      negative.weighted.indices <- match(negative.weighted.genes$gene, rownames(seurat.object))
       label.genes.negative <- paste(unique(total.output[[i]]$cytokineLabel), "GenesNegative", sep = "-")
       assign(label.genes.negative, negative.weighted.indices)
       label.weights.negative <- paste(unique(total.output[[i]]$cytokineLabel), "WeightsNegative", sep = "-")

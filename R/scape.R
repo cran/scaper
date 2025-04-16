@@ -46,7 +46,7 @@ scape <- function(counts.matrix, database="cytosig", cytokine="all") {
       out.data <- total.output[[i]]
       positive.weighted.data <- out.data %>% dplyr::filter(weight > 0) %>% dplyr::arrange(desc(weight))
       positive.weighted.genes <- positive.weighted.data[positive.weighted.data$gene %in% colnames(counts.matrix),]
-      positive.weighted.indices <- which(colnames(counts.matrix) %in% positive.weighted.genes$gene)
+      positive.weighted.indices <- match(positive.weighted.genes$gene, colnames(counts.matrix))
       label.genes.positive <- paste(unique(total.output[[i]]$cytokineLabel), "GenesPositive", sep = "-")
       assign(label.genes.positive, positive.weighted.indices)
       label.weights.positive <- paste(unique(total.output[[i]]$cytokineLabel), "WeightsPositive", sep = "-")
@@ -54,7 +54,7 @@ scape <- function(counts.matrix, database="cytosig", cytokine="all") {
       
       negative.weighted.data <- out.data %>% dplyr::filter(weight < 0) %>% dplyr::arrange(desc(weight))
       negative.weighted.genes <- negative.weighted.data[negative.weighted.data$gene %in% colnames(counts.matrix),]
-      negative.weighted.indices <- which(colnames(counts.matrix) %in% negative.weighted.genes$gene)
+      negative.weighted.indices <- match(negative.weighted.genes$gene, colnames(counts.matrix))
       label.genes.negative <- paste(unique(total.output[[i]]$cytokineLabel), "GenesNegative", sep = "-")
       assign(label.genes.negative, negative.weighted.indices)
       label.weights.negative <- paste(unique(total.output[[i]]$cytokineLabel), "WeightsNegative", sep = "-")
@@ -79,7 +79,7 @@ scape <- function(counts.matrix, database="cytosig", cytokine="all") {
     vam.out.negative <- vamForCollection(gene.expr = counts.matrix, 
                                          gene.weights = list_weights_negative,
                                          gene.set.collection = list_genes_negative)
-    vam.out.positive$cdf.value <- (vam.out.positive$cdf.value + (1-vam.out.negative$cdf.value))/2
+    vam.out.positive$cdf.value <- (vam.out.positive$cdf.value + (vam.out.negative$cdf.value))/2
     colnames(vam.out.positive$cdf.value) <- cytokine.list
     return(vam.out.positive$cdf.value)
   }
